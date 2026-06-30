@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファクタリング記事リライト診断ツール | pksp.jp</title>
+    <link rel="stylesheet" href="/static/css/factoring.css">
+</head>
+<body>
+    <div id="app">
+        <!-- ═══ ヘッダ ═══ -->
+        <header class="header">
+            <div class="header-inner">
+                <h1 class="logo">
+                    <span class="logo-icon">📊</span>
+                    ファクタリング記事リライト診断ツール
+                </h1>
+                <p class="subtitle">pksp.jp専用 — 競合比較ベースの診断＆リライト指示書生成</p>
+                <div id="llmStatusBadge" class="llm-status-badge" style="display:none;"></div>
+            </div>
+        </header>
+
+        <!-- ═══ 入力フォーム ═══ -->
+        <section class="input-section" id="inputSection">
+            <div class="card form-card">
+                <h2 class="card-title">🔍 診断対象の入力</h2>
+                <div class="form-group">
+                    <label for="urlInput">記事URL <span class="required">必須</span></label>
+                    <input type="url" id="urlInput" placeholder="https://pksp.jp/article/..." class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="keywordInput">メインキーワード <span class="required">必須</span></label>
+                    <input type="text" id="keywordInput" placeholder="例: ファクタリング 即日" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="roleInput">記事の役割 <span class="optional">任意</span></label>
+                    <select id="roleInput" class="form-input">
+                        <option value="流入">流入（集客用）</option>
+                        <option value="CV">CV（コンバージョン用）</option>
+                        <option value="収益">収益（アフィリエイト・広告収益用）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="llmProviderInput">診断エンジン <span class="optional">任意</span></label>
+                    <select id="llmProviderInput" class="form-input">
+                        <option value="auto">自動（LLM APIキーがあればLLM、なければルールベース）</option>
+                        <option value="llm">LLM（Claude/GPT）を優先</option>
+                        <option value="rule">ルールベース（高速・API不要）</option>
+                    </select>
+                    <p class="form-hint" id="llmHint">※ LLM使用には環境変数 ANTHROPIC_API_KEY または OPENAI_API_KEY が必要</p>
+                </div>
+                <button id="diagnoseBtn" class="btn-primary" onclick="startDiagnosis()">
+                    <span class="btn-icon">▶</span> 診断開始
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══ ローディング ═══ -->
+        <section class="loading-section" id="loadingSection" style="display:none;">
+            <div class="loading-card">
+                <div class="spinner"></div>
+                <h3 id="loadingTitle">診断中...</h3>
+                <div class="loading-steps" id="loadingSteps">
+                    <div class="step" data-step="1">① 自社記事をクロール中...</div>
+                    <div class="step" data-step="2">② Google検索で競合記事を取得中...</div>
+                    <div class="step" data-step="3">③ 競合記事をクロール中...</div>
+                    <div class="step" data-step="4">④ データをプロンプトに組み込み中...</div>
+                    <div class="step" data-step="5">⑤ LLM/RuleBasedで診断実行中...</div>
+                    <div class="step" data-step="6">⑥ レポート生成中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ 結果表示 ═══ -->
+        <section class="result-section" id="resultSection" style="display:none;">
+            <!-- 前回比較 -->
+            <div id="comparisonBar" class="comparison-bar" style="display:none;"></div>
+
+            <!-- ══════ 第1部：診断レポート ══════ -->
+            <div class="card report-card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 第1部：診断レポート</h2>
+                    <div class="diagnosis-date" id="diagnosisDate"></div>
+                </div>
+
+                <!-- 診断モード表示 -->
+                <div id="diagnosisModeBadge" class="mode-badge" style="display:none;"></div>
+
+                <!-- LLMフォールバック警告 -->
+                <div id="llmFallbackWarning" class="fallback-warning" style="display:none;"></div>
+
+                <!-- 総合スコア -->
+                <div class="total-score-container">
+                    <div class="total-score-box" id="totalScoreBox">
+                        <div class="total-score-number" id="totalScoreNumber">--</div>
+                        <div class="total-score-label">/ 100点</div>
+                        <div class="total-score-grade" id="totalScoreGrade"></div>
+                    </div>
+                    <div class="score-breakdown" id="scoreBreakdown"></div>
+                </div>
+
+                <!-- LLM詳細レポート（LLMモード時） -->
+                <div class="subsection" id="llmReportSection" style="display:none;">
+                    <h3 class="subsection-title">🤖 LLM診断レポート（全文）</h3>
+                    <pre class="llm-report-text" id="llmReportText"></pre>
+                </div>
+
+                <!-- 不足トピック TOP5（ルールベース時） -->
+                <div class="subsection" id="missingTopicsSection">
+                    <h3 class="subsection-title">📌 不足トピック TOP5</h3>
+                    <p class="subsection-desc">競合上位記事が多く扱うが、自社記事に不足している論点（出現頻度順）</p>
+                    <div id="missingTopicsList" class="topics-list"></div>
+                </div>
+
+                <!-- 鮮度が怪しい数値（ルールベース時） -->
+                <div class="subsection" id="freshnessSection">
+                    <h3 class="subsection-title">⏰ 鮮度が怪しい数値・記述（要ファクトチェック）</h3>
+                    <p class="subsection-desc">※ ツールは数値の正誤を断定しません。最終チェックは人間が公式ソースで行ってください。</p>
+                    <div id="freshnessIssuesList" class="issues-list"></div>
+                </div>
+
+                <!-- 弱いE-E-A-T項目（ルールベース時） -->
+                <div class="subsection" id="weakEeatSection">
+                    <h3 class="subsection-title">⚠️ 弱いE-E-A-T項目</h3>
+                    <p class="subsection-desc">YMYL領域のため、信頼性・専門性の強化が最重要。</p>
+                    <div id="weakEeatList" class="issues-list"></div>
+                </div>
+
+                <!-- PAAカバー率 -->
+                <div class="subsection" id="paaSection" style="display:none;">
+                    <h3 class="subsection-title">❓ 「他の人はこちらも質問」カバー率</h3>
+                    <div id="paaCoverageDisplay"></div>
+                </div>
+
+                <!-- 競合サマリ -->
+                <div class="subsection">
+                    <h3 class="subsection-title">🔎 競合記事サマリ</h3>
+                    <div id="competitorSummary"></div>
+                </div>
+            </div>
+
+            <!-- ══════ 第2部：リライト指示書 ══════ -->
+            <div class="card instruction-card">
+                <div class="card-header">
+                    <h2 class="card-title">📝 第2部：リライト指示書（自動生成）</h2>
+                    <div class="instruction-actions">
+                        <button class="btn-secondary btn-sm" onclick="copyInstructions()">
+                            📋 コピー
+                        </button>
+                        <button class="btn-secondary btn-sm" onclick="downloadInstructions()">
+                            💾 ダウンロード
+                        </button>
+                    </div>
+                </div>
+                <div id="instructionModeLabel" class="instruction-mode-label"></div>
+                <pre class="instruction-text" id="instructionText"></pre>
+            </div>
+
+            <!-- ══════ アクションボタン ══════ -->
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="copyAllReport()">
+                    📋 全レポートをコピー
+                </button>
+                <button class="btn-secondary" onclick="downloadFullReport()">
+                    💾 全レポートをダウンロード
+                </button>
+                <button class="btn-primary" onclick="resetForm()">
+                    ↻ 新しい診断
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══ エラー表示 ═══ -->
+        <section class="error-section" id="errorSection" style="display:none;">
+            <div class="error-card">
+                <h3>❌ エラーが発生しました</h3>
+                <p id="errorMessage"></p>
+                <button class="btn-secondary" onclick="resetForm()">戻る</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/factoring.js"></script>
+</body>
+</html>

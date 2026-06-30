@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pksp.jp SEOツールスイート</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .hero {
+            text-align: center;
+            color: white;
+            max-width: 800px;
+            margin-bottom: 3rem;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+        .hero .tagline {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            line-height: 1.7;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            width: 100%;
+        }
+        .tool-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .tool-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .tool-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .tool-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+        }
+        .tool-desc {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+        .tool-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+        .tool-features li {
+            color: #4b5563;
+            font-size: 0.9rem;
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        .tool-features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        .tool-cta {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+        .tool-cta:hover { opacity: 0.9; }
+        .footer {
+            margin-top: 3rem;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .footer a { color: white; }
+        .status-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            backdrop-filter: blur(10px);
+        }
+        .status-badge.active { background: rgba(16, 185, 129, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🎯 pksp.jp SEOツールスイート</h1>
+        <p class="tagline">
+            ファクタリング情報サイトの記事品質向上＆検索パフォーマンス分析を<br>
+            まとめて行う、YMYL特化型SEOツール
+        </p>
+        <div class="status-bar" id="statusBar">
+            <span class="status-badge" id="llmBadge">⏳ LLM状況確認中...</span>
+            <span class="status-badge" id="searchBadge">⏳ 検索API確認中...</span>
+        </div>
+    </div>
+
+    <div class="tools-grid">
+        <a href="/factoring" class="tool-card">
+            <div class="tool-icon">📝</div>
+            <div class="tool-title">ファクタリング記事リライト診断</div>
+            <div class="tool-desc">
+                記事URLと検索キーワードを入力すると、競合上位記事と比較し、
+                不足論点・E-E-A-T弱点を診断してリライト指示書を自動生成します。
+            </div>
+            <ul class="tool-features">
+                <li>YMYL重み付け100点満点スコアリング</li>
+                <li>不足トピックTOP5の自動抽出</li>
+                <li>八木氏（元銀行員）視点のリライト指示書</li>
+                <li>LLM診断 / ルールベース診断を切替</li>
+            </ul>
+            <span class="tool-cta">診断を開始 →</span>
+        </a>
+
+        <a href="/gsc" class="tool-card">
+            <div class="tool-icon">📊</div>
+            <div class="tool-title">GSC定期分析テンプレート</div>
+            <div class="tool-desc">
+                Search Consoleの7日・28日・3か月CSVをアップロードすると、
+                「良い変化／悪い変化／原因仮説／次に直すべき記事」を自動レポート化します。
+            </div>
+            <ul class="tool-features">
+                <li>期間横断トレンド比較（日次平均で正規化）</li>
+                <li>原因仮説の自動推定（9パターン）</li>
+                <li>機会損失スコアでリライト記事ランキング</li>
+                <li>Markdown / テキストで出力可能</li>
+            </ul>
+            <span class="tool-cta">分析を開始 →</span>
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>pksp.jp 専用SEOツールスイート &nbsp;|&nbsp; 元都市銀行法人営業・八木健介氏監修</p>
+        <p style="margin-top:0.5rem;">
+            <a href="/healthz">ステータス確認</a> &nbsp;|&nbsp;
+            <a href="/api/status">設定状況API</a>
+        </p>
+    </div>
+
+    <script>
+        // ステータス情報を取得
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(s => {
+                const llmBadge = document.getElementById('llmBadge');
+                if (s.llm_available) {
+                    llmBadge.textContent = '🤖 LLM診断利用可 (' + s.llm_provider + ')';
+                    llmBadge.classList.add('active');
+                } else {
+                    llmBadge.textContent = '⚙️ ルールベース診断のみ';
+                }
+
+                const searchBadge = document.getElementById('searchBadge');
+                if (s.serpapi_configured) {
+                    searchBadge.textContent = '🔍 SerpAPI設定済み';
+                    searchBadge.classList.add('active');
+                } else if (s.google_cse_configured) {
+                    searchBadge.textContent = '🔍 Google CSE設定済み';
+                    searchBadge.classList.add('active');
+                } else {
+                    searchBadge.textContent = '🔍 検索API未設定（フォールバック使用）';
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>

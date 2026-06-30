@@ -1,0 +1,27 @@
+# Render.com 用のデプロイ設定ファイル
+# このリポジトリをGitHubにpushして、Renderで「Blueprint」として読み込むと
+# このファイルだけで自動的にWebサービスが構築されます。
+services:
+  - type: web
+    name: pksp-tools
+    runtime: python
+    plan: free  # 無料プラン（必要に応じて starter / standard に変更）
+    region: singapore  # 日本に近いシンガポールリージョン
+    branch: main
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+      # ── オプション環境変数（Renderダッシュボードで設定） ──
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      # - key: SERPAPI_KEY
+      #   sync: false
+      # - key: BASIC_AUTH_USER
+      #   sync: false
+      # - key: BASIC_AUTH_PASS
+      #   sync: false

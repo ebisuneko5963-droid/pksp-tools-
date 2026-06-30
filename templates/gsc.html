@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pksp.jp GSC 定期分析テンプレート</title>
+    <link rel="stylesheet" href="/static/css/gsc.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-inner">
+                <h1 class="logo">
+                    <span class="logo-icon">📊</span>
+                    GSC 定期分析テンプレート
+                </h1>
+                <p class="subtitle">pksp.jp 専用 — Search Console データから「良い変化」「悪い変化」「原因仮説」「次に直すべき記事」を自動生成</p>
+            </div>
+        </header>
+
+        <!-- 入力フォーム -->
+        <section id="inputSection">
+            <div class="card">
+                <h2 class="card-title">📁 GSC CSV のアップロード</h2>
+                <p class="card-desc">
+                    Search Consoleから「過去7日間」「過去28日間」「過去3か月間」の各データをエクスポートし、
+                    それぞれのZIPに含まれる query.csv / page.csv / chart.csv（日付別データ）をアップロードしてください。
+                    複数ファイルをまとめて選択できます。
+                </p>
+
+                <div class="upload-row">
+                    <div class="upload-block">
+                        <label class="upload-label">
+                            <div class="upload-icon">📅</div>
+                            <div class="upload-title">直近7日間</div>
+                            <div class="upload-hint">query / page / chart CSV をまとめて選択</div>
+                            <input type="file" id="period_7d_files" multiple accept=".csv" onchange="updateFileList(this, 'list_7d')">
+                        </label>
+                        <div class="file-list" id="list_7d"></div>
+                    </div>
+
+                    <div class="upload-block">
+                        <label class="upload-label">
+                            <div class="upload-icon">📆</div>
+                            <div class="upload-title">直近28日間</div>
+                            <div class="upload-hint">query / page / chart CSV をまとめて選択</div>
+                            <input type="file" id="period_28d_files" multiple accept=".csv" onchange="updateFileList(this, 'list_28d')">
+                        </label>
+                        <div class="file-list" id="list_28d"></div>
+                    </div>
+
+                    <div class="upload-block">
+                        <label class="upload-label">
+                            <div class="upload-icon">📊</div>
+                            <div class="upload-title">直近3か月間</div>
+                            <div class="upload-hint">query / page / chart CSV をまとめて選択</div>
+                            <input type="file" id="period_3m_files" multiple accept=".csv" onchange="updateFileList(this, 'list_3m')">
+                        </label>
+                        <div class="file-list" id="list_3m"></div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
+                    ▶ 分析開始
+                </button>
+            </div>
+        </section>
+
+        <!-- ローディング -->
+        <section id="loadingSection" style="display:none;">
+            <div class="card loading-card">
+                <div class="spinner"></div>
+                <h3>分析中...</h3>
+                <div class="loading-steps" id="loadingSteps">
+                    <div class="step">① CSV読み込み中...</div>
+                    <div class="step">② 期間差分検出中...</div>
+                    <div class="step">③ 原因仮説生成中...</div>
+                    <div class="step">④ リライト推奨記事選定中...</div>
+                    <div class="step">⑤ レポート組み立て中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 結果表示 -->
+        <section id="resultSection" style="display:none;">
+
+            <!-- サマリ -->
+            <div class="card report-card">
+                <div class="card-header">
+                    <h2 class="card-title">📈 期間サマリ</h2>
+                    <div class="actions">
+                        <button class="btn-secondary btn-sm" onclick="copyMarkdown()">📋 Markdownコピー</button>
+                        <button class="btn-secondary btn-sm" onclick="downloadReport('md')">💾 .md DL</button>
+                        <button class="btn-secondary btn-sm" onclick="downloadReport('json')">💾 .json DL</button>
+                    </div>
+                </div>
+                <div id="summaryTable"></div>
+            </div>
+
+            <!-- 良い変化 -->
+            <div class="card section-good">
+                <h2 class="card-title">✅ 良い変化</h2>
+                <div id="goodChangesList"></div>
+            </div>
+
+            <!-- 悪い変化 -->
+            <div class="card section-bad">
+                <h2 class="card-title">⚠️ 悪い変化</h2>
+                <div id="badChangesList"></div>
+            </div>
+
+            <!-- 原因仮説 -->
+            <div class="card section-hypothesis">
+                <h2 class="card-title">🔍 原因仮説</h2>
+                <div id="hypothesesList"></div>
+            </div>
+
+            <!-- 次に直すべき記事 -->
+            <div class="card section-recommendations">
+                <h2 class="card-title">🎯 次に直すべき記事（リライト推奨）</h2>
+                <div id="recommendationsList"></div>
+            </div>
+
+            <!-- Markdownレポート（テキストプレビュー） -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📄 Markdown レポート（プレビュー）</h2>
+                    <button class="btn-secondary btn-sm" onclick="toggleMarkdown()">表示切替</button>
+                </div>
+                <pre class="markdown-preview" id="markdownPreview" style="display:none;"></pre>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="resetForm()">↻ 新しい分析</button>
+            </div>
+        </section>
+
+        <!-- エラー -->
+        <section id="errorSection" style="display:none;">
+            <div class="card error-card">
+                <h3>❌ エラー</h3>
+                <p id="errorMessage"></p>
+                <button class="btn-secondary" onclick="resetForm()">戻る</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/gsc.js"></script>
+</body>
+</html>
